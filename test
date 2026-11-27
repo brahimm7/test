@@ -1,0 +1,96 @@
+#include <Wire.h>
+#include <LiquidCrystal_I2C.h>
+
+LiquidCrystal_I2C lcd(0x27, 16, 2);
+
+const int relayPin = 7;   // Relay control pin
+const int ledPin   = 8;   // LED pin
+
+void setup() {
+  lcd.init();
+  lcd.backlight();
+
+  pinMode(relayPin, OUTPUT);
+  pinMode(ledPin, OUTPUT);
+
+  lcd.setCursor(0, 0);
+  lcd.print("System Ready");
+}
+
+void loop() {
+  // Turn relay ON
+  digitalWrite(relayPin, HIGH);
+  digitalWrite(ledPin, HIGH);
+  lcd.setCursor(0, 1);
+  lcd.print("Relay: ON ");
+  delay(2000);
+
+  // Turn relay OFF
+  digitalWrite(relayPin, LOW);
+  digitalWrite(ledPin, LOW);
+  lcd.setCursor(0, 1);
+  lcd.print("Relay: OFF");
+  delay(2000);
+}
+#include <Wire.h>
+#include <LiquidCrystal_I2C.h>
+#include <DHT.h>
+
+#define DHTPIN 2       // Broche DATA du DHT11 connectée à la pin 2
+#define DHTTYPE DHT11  // Type de capteur : DHT11
+
+LiquidCrystal_I2C lcd(0x27, 16, 2);
+DHT dht(DHTPIN, DHTTYPE);
+
+void setup() {
+  Serial.begin(9600);
+  dht.begin();
+
+  lcd.init();
+  lcd.backlight();
+
+  lcd.setCursor(0, 0);
+  lcd.print("DHT11 + LCD");
+  lcd.setCursor(0, 1);
+  lcd.print("Initialisation..");
+  delay(2000);
+  lcd.clear();
+}
+
+void loop() {
+  // Le DHT11 a besoin d'environ 2 secondes entre deux lectures
+  delay(2000);
+
+  float humidity = dht.readHumidity();
+  float temperature = dht.readTemperature(); // En degrés Celsius
+
+  // Vérification si la lecture a échoué
+  if (isnan(humidity) || isnan(temperature)) {
+    lcd.setCursor(0, 0);
+    lcd.print("Erreur capteur  ");
+    lcd.setCursor(0, 1);
+    lcd.print("Verifier DHT11  ");
+    Serial.println("Echec de lecture du capteur DHT11 !");
+    return;
+  }
+
+  // Affichage de la température sur la première ligne
+  lcd.setCursor(0, 0);
+  lcd.print("Temp: ");
+  lcd.print(temperature, 1);
+  lcd.print((char)223); // Symbole degré ° sur la plupart des LCD HD44780
+  lcd.print("C    ");
+
+  // Affichage de l'humidité sur la deuxième ligne
+  lcd.setCursor(0, 1);
+  lcd.print("Hum : ");
+  lcd.print(humidity, 1);
+  lcd.print("%     ");
+
+  // Suivi optionnel sur le moniteur série
+  Serial.print("Temperature: ");
+  Serial.print(temperature);
+  Serial.print(" °C | Humidite: ");
+  Serial.print(humidity);
+  Serial.println(" %");
+}
